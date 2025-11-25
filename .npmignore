@@ -1,0 +1,14 @@
+node_modules/
+credentials/
+nodes/
+*.ts
+!dist/**/*
+tsconfig.json
+gulpfile.js
+.git/
+.github/
+.vscode/
+.idea/
+*.log
+.DS_Store
+.env
