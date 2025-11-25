@@ -12,7 +12,7 @@ export class GeminiImageGenerator implements INodeType {
 		name: 'geminiImageGenerator',
 		icon: 'file:gemini.svg',
 		group: ['transform'],
-		version: 8,
+		version: 9,
 		description: 'Generate images using Google Gemini API and upload to WordPress as featured image',
 		defaults: {
 			name: 'Gemini Image Generator',
@@ -159,15 +159,24 @@ export class GeminiImageGenerator implements INodeType {
 				// Call Gemini API
 				const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:streamGenerateContent?key=${geminiCredentials.apiKey}`;
 
-				const response = await this.helpers.request({
-					method: 'POST',
-					url: apiUrl,
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: requestBody,
-					json: true,
-				});
+				let response;
+				try {
+					response = await this.helpers.request({
+						method: 'POST',
+						url: apiUrl,
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: requestBody,
+						json: true,
+					});
+				} catch (error) {
+					throw new NodeOperationError(
+						this.getNode(),
+						`Gemini API call failed: ${error.message}. Status: ${error.statusCode || 'unknown'}`,
+						{ itemIndex }
+					);
+				}
 
 				// Parse response (can be array of chunks or single object)
 				let candidates: any[] = [];
@@ -237,17 +246,26 @@ export class GeminiImageGenerator implements INodeType {
 				const timestamp = Date.now();
 				const fileName = `featured-image-${timestamp}.png`;
 
-				const uploadResponse = await this.helpers.request({
-					method: 'POST',
-					url: `${wordPressUrl}/wp-json/wp/v2/media`,
-					headers: {
-						'Content-Disposition': `attachment; filename="${fileName}"`,
-						'Content-Type': mimeType,
-						'Authorization': `Basic ${auth}`,
-					},
-					body: imageBuffer,
-					json: true,
-				});
+				let uploadResponse;
+				try {
+					uploadResponse = await this.helpers.request({
+						method: 'POST',
+						url: `${wordPressUrl}/wp-json/wp/v2/media`,
+						headers: {
+							'Content-Disposition': `attachment; filename="${fileName}"`,
+							'Content-Type': mimeType,
+							'Authorization': `Basic ${auth}`,
+						},
+						body: imageBuffer,
+						json: true,
+					});
+				} catch (error) {
+					throw new NodeOperationError(
+						this.getNode(),
+						`WordPress media upload failed: ${error.message}. Status: ${error.statusCode || 'unknown'}. URL: ${wordPressUrl}/wp-json/wp/v2/media`,
+						{ itemIndex }
+					);
+				}
 
 				const mediaId = uploadResponse.id;
 				const mediaUrl = uploadResponse.source_url;
@@ -261,18 +279,26 @@ export class GeminiImageGenerator implements INodeType {
 				}
 
 				// Set featured image for post
-				await this.helpers.request({
-					method: 'POST',
-					url: `${wordPressUrl}/wp-json/wp/v2/posts/${postId}`,
-					headers: {
-						'Content-Type': 'application/json',
-						'Authorization': `Basic ${auth}`,
-					},
-					body: {
-						featured_media: mediaId,
-					},
-					json: true,
-				});
+				try {
+					await this.helpers.request({
+						method: 'POST',
+						url: `${wordPressUrl}/wp-json/wp/v2/posts/${postId}`,
+						headers: {
+							'Content-Type': 'application/json',
+							'Authorization': `Basic ${auth}`,
+						},
+						body: {
+							featured_media: mediaId,
+						},
+						json: true,
+					});
+				} catch (error) {
+					throw new NodeOperationError(
+						this.getNode(),
+						`WordPress set featured image failed: ${error.message}. Status: ${error.statusCode || 'unknown'}. Post ID: ${postId}`,
+						{ itemIndex }
+					);
+				}
 
 				// Return success info
 				returnData.push({
