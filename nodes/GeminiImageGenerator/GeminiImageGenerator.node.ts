@@ -12,7 +12,7 @@ export class GeminiImageGenerator implements INodeType {
 		name: 'geminiImageGenerator',
 		icon: 'file:gemini.svg',
 		group: ['transform'],
-		version: 7,
+		version: 8,
 		description: 'Generate images using Google Gemini API and upload to WordPress as featured image',
 		defaults: {
 			name: 'Gemini Image Generator',
@@ -25,7 +25,7 @@ export class GeminiImageGenerator implements INodeType {
 				required: true,
 			},
 			{
-				name: 'wordPressApi',
+				name: 'wordpressApi',
 				required: true,
 			},
 		],
@@ -130,7 +130,7 @@ export class GeminiImageGenerator implements INodeType {
 				}
 
 				// Get WordPress credentials
-				const wordPressCredentials = await this.getCredentials('wordPressApi');
+				const wordPressCredentials = await this.getCredentials('wordpressApi');
 				if (!wordPressCredentials) {
 					throw new NodeOperationError(this.getNode(), 'WordPress API credentials are required', { itemIndex });
 				}

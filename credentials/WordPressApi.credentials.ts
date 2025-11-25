@@ -4,7 +4,7 @@ import {
 } from 'n8n-workflow';
 
 export class WordPressApi implements ICredentialType {
-	name = 'wordPressApi';
+	name = 'wordpressApi';
 	displayName = 'WordPress API';
 	documentationUrl = 'https://developer.wordpress.org/rest-api/';
 	properties: INodeProperties[] = [
