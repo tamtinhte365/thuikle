@@ -12,7 +12,7 @@ export class GeminiImageGenerator implements INodeType {
 		name: 'geminiImageGenerator',
 		icon: 'file:gemini.svg',
 		group: ['transform'],
-		version: 6,
+		version: 7,
 		description: 'Generate images using Google Gemini API and upload to WordPress as featured image',
 		defaults: {
 			name: 'Gemini Image Generator',

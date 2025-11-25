@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-wordpress-nano-banana",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "n8n community node for generating images using Google Gemini API and optionally uploading to WordPress",
   "keywords": [
     "n8n-community-node-package",
