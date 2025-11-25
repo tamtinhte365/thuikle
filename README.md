@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/n8n-nodes-wordpress-nano-banana.svg)](https://www.npmjs.com/package/n8n-nodes-wordpress-nano-banana)
 
-This is an n8n community node that lets you generate images using Google Gemini API and optionally upload them to WordPress as featured images.
+This is an n8n community node that generates images using Google Gemini API and automatically uploads them to WordPress as featured images.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
@@ -11,9 +11,8 @@ This is an n8n community node that lets you generate images using Google Gemini 
 - 🎨 Generate images using Google Gemini API (model: `gemini-3-pro-image-preview`)
 - 🖼️ Configurable aspect ratios: 16:9, 9:16, 4:3, 3:4, 1:1
 - 📏 Multiple image sizes: 1K, 2K, 4K
-- 🔄 Optional WordPress integration
-- 📌 Automatically set generated image as featured image for WordPress posts
-- 💾 Multiple output formats: Binary, Base64, JSON (debug)
+- 📌 Automatically upload and set as featured image for WordPress posts
+- 🚀 Simple and straightforward - no complex options
 - 🔗 Works seamlessly with other n8n nodes
 
 ## Installation
@@ -57,22 +56,7 @@ This node requires the following credentials:
 
 ## Usage
 
-### Example 1: Generate Image Only
-
-```
-Input: { title: "Beautiful sunset over mountains" }
-
-Node Configuration:
-- Enable WordPress Upload: OFF
-- Prompt: Generate an image about {{ $json.title }}
-- Aspect Ratio: 16:9
-- Image Size: 1K
-- Output Format: Binary
-
-Output: Binary image data that can be used with other nodes
-```
-
-### Example 2: Generate Image and Set as WordPress Featured Image
+### Workflow Example
 
 ```
 Workflow:
@@ -85,11 +69,10 @@ Workflow:
 Input: { id: 123, title: "My Blog Post" }
 
 Node Configuration:
-- Enable WordPress Upload: ON
 - Prompt: Generate a featured image for: {{ $json.title }}
+- Post ID: {{ $json.id }}
 - Aspect Ratio: 16:9
 - Image Size: 2K
-- Post ID: {{ $json.id }}
 
 Output: {
   "success": true,
@@ -98,6 +81,11 @@ Output: {
     "mediaId": 456,
     "mediaUrl": "https://site.com/wp-content/uploads/2024/image.png",
     "postId": "123"
+  },
+  "image": {
+    "mimeType": "image/png",
+    "fileSize": 123456,
+    "fileName": "featured-image-1234567890.png"
   }
 }
 ```
@@ -106,21 +94,18 @@ Output: {
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| Enable WordPress Upload | Boolean | No | Toggle to enable automatic WordPress upload |
 | Prompt | String | Yes | Text prompt for image generation (supports n8n expressions) |
+| Post ID | String | Yes | WordPress post ID (supports n8n expressions like {{ $json.id }}) |
 | Aspect Ratio | Dropdown | No | Image aspect ratio (16:9, 9:16, 4:3, 3:4, 1:1) |
 | Image Size | Dropdown | No | Image size (1K, 2K, 4K) |
-| Post ID | String | Yes* | WordPress post ID (*only when WordPress upload is enabled) |
-| Output Format | Dropdown | No | Output format when WordPress upload is disabled |
-| Binary Property Name | String | No | Property name for binary output |
 
 ## Common Use Cases
 
 1. **Automated Blog Thumbnails**: Generate featured images for WordPress posts based on titles
-2. **Social Media Content**: Create images for social posts using AI
-3. **E-commerce**: Generate product images from descriptions
-4. **Newsletter Headers**: Create visual headers for email campaigns
-5. **Content Pipelines**: Integrate image generation into automated content workflows
+2. **Content Automation**: Automatically create and set featured images when publishing posts
+3. **Bulk Post Processing**: Generate unique featured images for multiple posts at once
+4. **Dynamic Visual Content**: Create context-aware images based on post content
+5. **WordPress Content Pipelines**: Integrate AI image generation into automated publishing workflows
 
 ## Troubleshooting
 
