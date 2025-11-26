@@ -69,6 +69,9 @@ Workflow:
 Input: { id: 123, title: "My Blog Post" }
 
 Node Configuration:
+- WordPress URL: https://yoursite.com
+- WordPress Username: your-username
+- WordPress Password: your-app-password
 - Prompt: Generate a featured image for: {{ $json.title }}
 - Post ID: {{ $json.id }}
 - Aspect Ratio: 16:9
@@ -94,6 +97,9 @@ Output: {
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
+| WordPress URL | String | Yes | Your WordPress site URL (e.g., https://example.com) |
+| WordPress Username | String | Yes | WordPress username |
+| WordPress Password | Password | Yes | WordPress Application Password or regular password |
 | Prompt | String | Yes | Text prompt for image generation (supports n8n expressions) |
 | Post ID | String | Yes | WordPress post ID (supports n8n expressions like {{ $json.id }}) |
 | Aspect Ratio | Dropdown | No | Image aspect ratio (16:9, 9:16, 4:3, 3:4, 1:1) |

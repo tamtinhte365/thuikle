@@ -12,7 +12,7 @@ export class GeminiImageGenerator implements INodeType {
 		name: 'geminiImageGenerator',
 		icon: 'file:gemini.svg',
 		group: ['transform'],
-		version: 10,
+		version: 11,
 		description: 'Generate images using Google Gemini API and upload to WordPress as featured image',
 		defaults: {
 			name: 'Gemini Image Generator',
@@ -24,12 +24,36 @@ export class GeminiImageGenerator implements INodeType {
 				name: 'geminiApi',
 				required: true,
 			},
-			{
-				name: 'wordpressApi',
-				required: true,
-			},
 		],
 		properties: [
+			{
+				displayName: 'WordPress URL',
+				name: 'wordpressUrl',
+				type: 'string',
+				default: '',
+				required: true,
+				placeholder: 'https://example.com',
+				description: 'Your WordPress site URL (without trailing slash)',
+			},
+			{
+				displayName: 'WordPress Username',
+				name: 'wordpressUsername',
+				type: 'string',
+				default: '',
+				required: true,
+				description: 'WordPress username for authentication',
+			},
+			{
+				displayName: 'WordPress Password',
+				name: 'wordpressPassword',
+				type: 'string',
+				typeOptions: {
+					password: true,
+				},
+				default: '',
+				required: true,
+				description: 'WordPress Application Password (recommended) or regular password',
+			},
 			{
 				displayName: 'Prompt',
 				name: 'prompt',
@@ -110,12 +134,29 @@ export class GeminiImageGenerator implements INodeType {
 		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
 			try {
 				// Get parameters
+				const wordpressUrl = (this.getNodeParameter('wordpressUrl', itemIndex) as string).replace(/\/$/, '');
+				const wordpressUsername = this.getNodeParameter('wordpressUsername', itemIndex) as string;
+				const wordpressPassword = this.getNodeParameter('wordpressPassword', itemIndex) as string;
 				const prompt = this.getNodeParameter('prompt', itemIndex) as string;
 				const postId = this.getNodeParameter('postId', itemIndex) as string;
 				const aspectRatio = this.getNodeParameter('aspectRatio', itemIndex) as string;
 				const imageSize = this.getNodeParameter('imageSize', itemIndex) as string;
 
 				console.log('[Gemini] Starting execution with prompt:', prompt.substring(0, 50));
+				console.log('[Gemini] WordPress URL:', wordpressUrl);
+
+				// Validate required fields
+				if (!wordpressUrl || wordpressUrl.trim() === '') {
+					throw new NodeOperationError(this.getNode(), 'WordPress URL is required', { itemIndex });
+				}
+
+				if (!wordpressUsername || wordpressUsername.trim() === '') {
+					throw new NodeOperationError(this.getNode(), 'WordPress Username is required', { itemIndex });
+				}
+
+				if (!wordpressPassword || wordpressPassword.trim() === '') {
+					throw new NodeOperationError(this.getNode(), 'WordPress Password is required', { itemIndex });
+				}
 
 				if (!prompt || prompt.trim() === '') {
 					throw new NodeOperationError(this.getNode(), 'Prompt is required', { itemIndex });
@@ -131,14 +172,6 @@ export class GeminiImageGenerator implements INodeType {
 				if (!geminiCredentials || !geminiCredentials.apiKey) {
 					throw new NodeOperationError(this.getNode(), 'Gemini API credentials are required', { itemIndex });
 				}
-
-				// Get WordPress credentials
-				console.log('[Gemini] Getting WordPress credentials...');
-				const wordPressCredentials = await this.getCredentials('wordpressApi');
-				if (!wordPressCredentials) {
-					throw new NodeOperationError(this.getNode(), 'WordPress API credentials are required', { itemIndex });
-				}
-				console.log('[Gemini] WordPress URL:', wordPressCredentials.url);
 
 				// Prepare request body for Gemini API
 				const requestBody = {
@@ -257,22 +290,19 @@ export class GeminiImageGenerator implements INodeType {
 				const imageBuffer = Buffer.from(imageBase64, 'base64');
 				console.log('[Gemini] Image buffer size:', imageBuffer.length, 'bytes');
 
-				// Upload to WordPress
-				const wordPressUrl = (wordPressCredentials.url as string).replace(/\/$/, ''); // Remove trailing slash
-				const username = wordPressCredentials.username as string;
-				const password = wordPressCredentials.password as string;
-				const auth = Buffer.from(`${username}:${password}`).toString('base64');
+				// Prepare WordPress authentication
+				const auth = Buffer.from(`${wordpressUsername}:${wordpressPassword}`).toString('base64');
 
 				// Upload image to WordPress Media Library
 				const timestamp = Date.now();
 				const fileName = `featured-image-${timestamp}.png`;
 
-				console.log('[WordPress] Uploading image to:', wordPressUrl);
+				console.log('[WordPress] Uploading image to:', wordpressUrl);
 				let uploadResponse;
 				try {
 					uploadResponse = await this.helpers.request({
 						method: 'POST',
-						url: `${wordPressUrl}/wp-json/wp/v2/media`,
+						url: `${wordpressUrl}/wp-json/wp/v2/media`,
 						headers: {
 							'Content-Disposition': `attachment; filename="${fileName}"`,
 							'Content-Type': mimeType,
@@ -286,7 +316,7 @@ export class GeminiImageGenerator implements INodeType {
 					console.error('[WordPress] Upload failed:', error.message);
 					throw new NodeOperationError(
 						this.getNode(),
-						`WordPress media upload failed: ${error.message}. Status: ${error.statusCode || 'unknown'}. URL: ${wordPressUrl}/wp-json/wp/v2/media`,
+						`WordPress media upload failed: ${error.message}. Status: ${error.statusCode || 'unknown'}. URL: ${wordpressUrl}/wp-json/wp/v2/media`,
 						{ itemIndex }
 					);
 				}
@@ -307,7 +337,7 @@ export class GeminiImageGenerator implements INodeType {
 				try {
 					await this.helpers.request({
 						method: 'POST',
-						url: `${wordPressUrl}/wp-json/wp/v2/posts/${postId}`,
+						url: `${wordpressUrl}/wp-json/wp/v2/posts/${postId}`,
 						headers: {
 							'Content-Type': 'application/json',
 							'Authorization': `Basic ${auth}`,
